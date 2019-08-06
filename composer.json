@@ -1,0 +1,34 @@
+{
+  "name": "datamincer/crowdanki",
+  "version": "0.2",
+  "description": "DataMincer: CrowdAnki plugins",
+  "license": "LGPL-3.0-or-later",
+  "authors": [
+    {
+      "name": "Artiom Neganov",
+      "email": "aneganov@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "type": "library",
+  "minimum-stability": "dev",
+  "require": {
+    "onkeltem/generic-logger": "dev-master",
+    "ramsey/uuid": "*"
+  },
+  "require-dev": {
+    "datamincer/core": "dev-master"
+  },
+  "autoload": {
+    "psr-4": {
+      "DataMincerCrowdAnki\\": "src/"
+    },
+    "files": [
+      "src/Fields/CrowdAnkiDeck.php",
+      "src/Fields/CrowdAnkiNote.php",
+      "src/Fields/CrowdAnkiNotes.php",
+      "src/Fields/Guid.php",
+      "src/Fields/Rtags.php"
+    ]
+  }
+}
