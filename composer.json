@@ -12,11 +12,8 @@
   ],
   "type": "library",
   "minimum-stability": "dev",
-  "require": {
-    "onkeltem/generic-logger": "dev-master",
-    "ramsey/uuid": "*"
-  },
   "require-dev": {
+    "datamincer/plugins": "dev-master"
     "datamincer/core": "dev-master"
   },
   "autoload": {
