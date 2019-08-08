@@ -25,7 +25,8 @@
       "src/Fields/CrowdAnkiNote.php",
       "src/Fields/CrowdAnkiNotes.php",
       "src/Fields/Guid.php",
-      "src/Fields/Rtags.php"
+      "src/Fields/Rtags.php",
+      "src/Workers/CrowdAnki.php"
     ]
   }
 }
