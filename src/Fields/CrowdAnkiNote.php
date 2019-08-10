@@ -13,7 +13,7 @@ use DataMincerCore\Plugin\PluginFieldInterface;
  */
 class CrowdAnkiNote extends PluginFieldBase {
 
-  protected static $pluginId = 'default';
+  protected static $pluginId = 'crowdankinote';
   protected static $pluginType = 'crowdankinote';
   protected static $isDefault = TRUE;
 
@@ -26,6 +26,7 @@ class CrowdAnkiNote extends PluginFieldBase {
     $result['fields'] = array_map('strval', $result['fields']);
     return $result;
   }
+
 
   static function getSchemaChildren() {
     return parent::getSchemaChildren() + [

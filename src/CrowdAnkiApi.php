@@ -76,7 +76,6 @@ class CrowdAnkiApi {
   }
 
   /**
-   * @param $uuid
    * @param $values
    * @return array|mixed
    */

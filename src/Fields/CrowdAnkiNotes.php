@@ -11,7 +11,7 @@ use DataMincerCore\Plugin\PluginFieldBase;
  */
 class CrowdAnkiNotes extends PluginFieldBase {
 
-  protected static $pluginId = 'default';
+  protected static $pluginId = 'crowdankinotes';
   protected static $pluginType = 'crowdankinotes';
   protected static $isDefault = TRUE;
 

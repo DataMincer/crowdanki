@@ -21,12 +21,12 @@
       "DataMincerCrowdAnki\\": "src/"
     },
     "files": [
-      "src/Fields/CrowdAnkiDeck.php",
       "src/Fields/CrowdAnkiNote.php",
       "src/Fields/CrowdAnkiNotes.php",
       "src/Fields/Guid.php",
       "src/Fields/Rtags.php",
-      "src/Workers/CrowdAnkiDeck.php"
+      "src/Workers/CrowdAnkiDeck.php",
+      "src/Workers/CrowdAnkiDecks.php",
     ]
   }
 }

@@ -1,24 +1,30 @@
 <?php
 
-namespace DataMincerCrowdAnki\Fields;
+namespace DataMincerCrowdAnki\Workers;
 
 use DataMincerCore\Exception\PluginException;
-use DataMincerCore\Plugin\PluginFieldBase;
+use DataMincerCore\Plugin\PluginWorkerBase;
 use DataMincerCrowdAnki\CrowdAnkiApi;
+use DataMincerCrowdAnki\Fields\CrowdAnkiNotes;
 
 /**
  * @property CrowdAnkiNotes notes
  */
-class CrowdAnkiDeck extends PluginFieldBase {
+class CrowdAnkiDecks extends PluginWorkerBase {
 
-  protected static $pluginId = 'crowdankideck';
+  protected static $pluginId = 'crowdankidecks';
+
+  public function evaluate($data = []) {
+    // Do not evaluate anything, as it's supposed for process
+  }
 
   /**
    * @inheritDoc
-   * @throws PluginException
    */
-  public function getValue($data) {
-    // Copy notes and media data
+  public function process($config) {
+    $data = yield;
+    $values = $this->evaluateChildren($data);
+
     $notes = [];
     $media = [];
     $values = $this->evaluateChildren($data);
@@ -35,6 +41,16 @@ class CrowdAnkiDeck extends PluginFieldBase {
     // Push extra 'fields' branch into $values
     $values = ['fields' => $this->notes->each->fields] + $values;
     CrowdAnkiApi::createDeck($values, $notes, $media);
+
+    yield $this->mergeResult($note, $data, $config);
+  }
+
+  /**
+   * @inheritDoc
+   * @throws PluginException
+   */
+  public function getValue($data) {
+    // Copy notes and media data
   }
 
   static function getSchemaChildren() {
@@ -58,7 +74,7 @@ class CrowdAnkiDeck extends PluginFieldBase {
   }
 
   static function defaultConfig($data = NULL) {
-    return CrowdAnkiApi::defaultConfig($data);
+    return parent::defaultConfig($data) + CrowdAnkiApi::defaultConfig($data);
   }
 
 }
