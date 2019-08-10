@@ -1,10 +1,10 @@
 <?php
 
-namespace DataMincerCrowdAnki\Worker;
+namespace DataMincerCrowdAnki\Workers;
 
 use DataMincerCore\Plugin\PluginWorkerBase;
 
-class CrowdAnki extends PluginWorkerBase {
+class CrowdAnkiDeck extends PluginWorkerBase {
 
   protected static $pluginId = 'crowdanki';
 
