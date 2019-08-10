@@ -6,6 +6,9 @@ use DataMincerCore\Exception\PluginException;
 use DataMincerCore\Plugin\PluginFieldBase;
 use DataMincerCore\Util;
 
+/**
+ * @property CrowdAnkiNotes notes
+ */
 class CrowdAnkiDeck extends PluginFieldBase {
 
   protected static $pluginId = 'crowdankideck';
@@ -40,7 +43,7 @@ class CrowdAnkiDeck extends PluginFieldBase {
    */
   protected function createDeck($values, $notes, $media) {
     $build = $this->buildDeck($values, $notes, $media);
-    $path = $values['build_dir'] . '/' . $values['build_name'] . '/' . $values['build_name'] . '.json';
+    $path = $values['build']['path'] . '/' . $values['build']['name'] . '/' . $values['build']['name'] . '.json';
     Util::prepareDir(dirname($path));
     file_put_contents($path, Util::toJson($this->serializeObjects($build), TRUE));
   }
@@ -71,9 +74,9 @@ class CrowdAnkiDeck extends PluginFieldBase {
   protected function buildDeck($values, $notes, $media) {
     return [
       '__type__' => 'Deck',
-      'crowdanki_uuid' => $values['deck_uuid'],
-      'name' => $values['deck_name'],
-      'desc' => $values['deck_desc'] ?? '',
+      'crowdanki_uuid' => $values['deck']['uuid'],
+      'name' => $values['deck']['name'],
+      'desc' => $values['deck']['desc'] ?? '',
       'deck_configurations' => [$this->buildDeckConfig($config_uuid, $values)],
       'deck_config_uuid' => $config_uuid,
       'note_models' => [$this->buildDeckModel($model_uuid, $values)],
@@ -88,17 +91,9 @@ class CrowdAnkiDeck extends PluginFieldBase {
    * @return array
    */
   protected function buildMedia($values, $media) {
-    if (isset($values['media_files'])) {
-      foreach ($values['media_files'] as $list) {
-        if (is_array($list)) {
-          foreach ($list as $file) {
-            if (!in_array($file, $media)) {
-              $media[] = $file;
-            }
-          }
-        }
-        else {
-          $file = $list;
+    if (isset($values['media'])) {
+      foreach ($values['media'] as $list) {
+        foreach ($list as $file) {
           if (!in_array($file, $media)) {
             $media[] = $file;
           }
@@ -116,8 +111,8 @@ class CrowdAnkiDeck extends PluginFieldBase {
   protected function buildDeckConfig(&$uuid, $values) {
     return [
       '__type__' => 'DeckConfig',
-      'crowdanki_uuid' => $uuid = $values['config_uuid'],
-      'name' => $values['config_name'],
+      'crowdanki_uuid' => $uuid = $values['config']['uuid'],
+      'name' => $values['config']['name'],
     ] + $values['defaults']['config'];
   }
 
@@ -128,14 +123,13 @@ class CrowdAnkiDeck extends PluginFieldBase {
    * @throws PluginException
    */
   protected function buildDeckModel(&$uuid, $values) {
-    $a = 1;
     return [
       '__type__' => 'NoteModel',
-      'crowdanki_uuid' => $uuid = $values['model_uuid'],
-      'name' => $values['model_name'],
+      'crowdanki_uuid' => $uuid = $values['model']['uuid'],
+      'name' => $values['model']['name'],
       'flds' => $this->buildDeckFields($values),
       'tmpls' => $this->buildDeckTemplates($values),
-      'css' => $values['model_css'],
+      'css' => $values['model']['css'],
     ] + $values['defaults']['model'];
   }
 
@@ -160,7 +154,7 @@ class CrowdAnkiDeck extends PluginFieldBase {
   protected function buildDeckTemplates($values) {
     $result = [];
     $i = 0;
-    foreach ($values['model_templates'] as $name => $template) {
+    foreach ($values['model']['templates'] as $name => $template) {
       if (($parts = preg_split('~\r?\n\r?\n--\r?\n\r?\n~', $template)) === FALSE) {
         $this->error("Incorrect template: {$name}. It must consist of two parts divided by '--' on a separate line.");
       }
@@ -199,30 +193,30 @@ class CrowdAnkiDeck extends PluginFieldBase {
     /** @noinspection DuplicatedCode */
     return parent::getSchemaChildren() + [
       # Build params
-      'build_dir' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-      'build_name' =>  ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-
-      # Deck properties
-      'deck_uuid' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-      'deck_name' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-      'deck_desc' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-
-      # Deck Configuration properties (we support only ONE configuration per deck)
-      'config_uuid' =>     ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-      'config_name' =>     ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-
-      # Deck model properties (we support only ONE model per deck)
-      'model_uuid' =>      ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-      'model_name' =>      ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-      'model_templates' => ['_type' => 'prototype', '_required' => FALSE,
-        '_prototype' =>      ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field',
-       ]],
-      'model_css' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-
-      # Deck media
-      'media_files' =>     ['_type' => 'prototype', '_required' => FALSE,
-        '_prototype' =>      ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field',
+      'build' =>      ['_type' => 'array', '_required' => TRUE, '_children' => [
+        'name' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+        'path' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+      ]],
+      'deck' =>       ['_type' => 'array', '_required' => TRUE, '_children' => [
+        'uuid' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+        'name' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+        'desc' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+      ]],
+      'config' =>     ['_type' => 'array', '_required' => TRUE, '_children' => [
+        'uuid' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+        'name' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+      ]],
+      'model' =>      ['_type' => 'array', '_required' => TRUE, '_children' => [
+        'uuid' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+        'name' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+        'templates' =>  ['_type' => 'prototype', '_required' => FALSE,
+          '_prototype' =>  ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field',
         ]],
+        'css' =>        ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
+      ]],
+      'media' =>      ['_type' => 'prototype', '_required' => FALSE,
+        '_prototype' =>      ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field',
+      ]],
 
       # Deck notes and their media
       'notes' =>            ['_type' => 'partial', '_required' => TRUE, '_partial' => 'crowdankinotes'],
