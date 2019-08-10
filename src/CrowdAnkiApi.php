@@ -4,17 +4,16 @@ namespace DataMincerCrowdAnki;
 
 use DataMincerCore\Exception\PluginException;
 use DataMincerCore\Util;
+use Exception;
 
 class CrowdAnkiApi {
 
   /**
    * @param $values
-   * @param $notes
-   * @param $media
    * @throws PluginException
    */
-  public static function createDeck($values, $notes, $media) {
-    $build = static::buildDeck($values, $notes, $media);
+  public static function createDeck($values) {
+    $build = static::buildDeck($values);
     $path = $values['build']['path'] . '/' . $values['build']['name'] . '/' . $values['build']['name'] . '.json';
     Util::prepareDir(dirname($path));
     file_put_contents($path, Util::toJson(static::serializeObjects($build), TRUE));
@@ -38,12 +37,10 @@ class CrowdAnkiApi {
 
   /**
    * @param $values
-   * @param $notes
-   * @param $media
    * @return array|mixed
-   * @throws PluginException
+   * @throws Exception
    */
-  protected static function buildDeck($values, $notes, $media) {
+  protected static function buildDeck($values) {
     return [
       '__type__' => 'Deck',
       'crowdanki_uuid' => $values['deck']['uuid'],
@@ -52,17 +49,17 @@ class CrowdAnkiApi {
       'deck_configurations' => [static::buildDeckConfig($values)],
       'deck_config_uuid' => $values['config']['uuid'],
       'note_models' => [static::buildDeckModel($values)],
-      'media_files' => static::buildMedia($values, $media),
-      'notes' => static::buildDeckNotes($values['config']['uuid'], $values, $notes),
+      'media_files' => static::buildMedia($values),
+      'notes' => static::buildDeckNotes($values),
     ] + $values['defaults']['deck'];
   }
 
   /**
    * @param $values
-   * @param $media
    * @return array
    */
-  protected static function buildMedia($values, $media) {
+  protected static function buildMedia($values) {
+    $media = $values['notes']['media'];
     if (isset($values['media'])) {
       foreach ($values['media'] as $list) {
         foreach ($list as $file) {
@@ -88,10 +85,9 @@ class CrowdAnkiApi {
   }
 
   /**
-   * @param $uuid
    * @param $values
    * @return array
-   * @throws PluginException
+   * @throws Exception
    */
   protected static function buildDeckModel($values) {
     return [
@@ -111,7 +107,7 @@ class CrowdAnkiApi {
   protected static function buildDeckFields($values) {
     $result = [];
     $i = 0;
-    foreach (array_keys($values['fields']) as $field_name) {
+    foreach ($values['model']['fields'] as $field_name) {
       $result[] = ['name' => $field_name, 'ord' => $i++] + $values['defaults']['model_field'];
     }
     return $result;
@@ -120,14 +116,14 @@ class CrowdAnkiApi {
   /**
    * @param $values
    * @return array
-   * @throws PluginException
+   * @throws Exception
    */
   protected static function buildDeckTemplates($values) {
     $result = [];
     $i = 0;
     foreach ($values['model']['templates'] as $name => $template) {
-      if (($parts = preg_split('~\r?\n\r?\n--\r?\n\r?\n~', $template)) === FALSE) {
-        throw new PluginException("Incorrect template: {$name}. It must consist of two parts divided by '--' on a separate line.", NULL);
+      if (($parts = preg_split('~\r?\n\r?\n--\r?\n\r?\n~', $template)) === FALSE || count($parts) !== 2) {
+        throw new Exception("Incorrect template: {$name}. It must consist of two parts divided by '--' on a separate line.");
       }
       $result[] = [
         'name' => $name,
@@ -140,20 +136,18 @@ class CrowdAnkiApi {
   }
 
   /**
-   * @param $model_uuid
    * @param $values
-   * @param $notes
    * @return array
    */
-  protected static function buildDeckNotes($model_uuid, $values, $notes) {
+  protected static function buildDeckNotes($values) {
     $result = [];
-    foreach ($notes as $i => $note) {
+    foreach ($values['notes']['data'] as $i => $note) {
       $result[$i] = [
         '__type__' => 'Note',
         'data' => "",
         'fields' => array_values($note['fields']),
         'guid' => $note['guid'],
-        'note_model_uuid' => $model_uuid,
+        'note_model_uuid' => $values['model']['uuid'],
         'tags' => $note['tags'] ?? [],
       ] + $values['defaults']['note'];
     }

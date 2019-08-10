@@ -5,6 +5,7 @@ namespace DataMincerCrowdAnki\Workers;
 use DataMincerCore\Plugin\PluginWorkerBase;
 use DataMincerCrowdAnki\CrowdAnkiApi;
 use DataMincerCrowdAnki\Fields\CrowdAnkiNote;
+use Exception;
 
 /**
  * @property CrowdAnkiNote note
@@ -31,8 +32,30 @@ class CrowdAnkiDeck extends PluginWorkerBase {
   }
 
   public function finalize($config, $results) {
-    $a = 1;
-    //CrowdAnkiApi::createDeck($config, );
+    $notes = [];
+    $media = [];
+    foreach($results as $result) {
+      $notes[] = array_intersect_key($result['row'], array_flip(['fields', 'guid', 'tags']));
+      if (isset($result['row']['media'])) {
+        foreach ($result['row']['media'] as $file) {
+          if (!in_array($file, $media)) {
+            $media[] = $file;
+          }
+        }
+      }
+    }
+    $values = $config;
+    $values['model']['fields'] = array_keys($this->note->fields);
+    $values['notes'] = [
+      'data' => $notes,
+      'media' => $media,
+    ];
+    try {
+      CrowdAnkiApi::createDeck($values);
+    }
+    catch (Exception $e) {
+      $this->error($e->getMessage());
+    }
   }
 
 

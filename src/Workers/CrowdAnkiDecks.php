@@ -6,6 +6,7 @@ use DataMincerCore\Exception\PluginException;
 use DataMincerCore\Plugin\PluginWorkerBase;
 use DataMincerCrowdAnki\CrowdAnkiApi;
 use DataMincerCrowdAnki\Fields\CrowdAnkiNotes;
+use Exception;
 
 /**
  * @property CrowdAnkiNotes notes
@@ -15,7 +16,8 @@ class CrowdAnkiDecks extends PluginWorkerBase {
   protected static $pluginId = 'crowdankidecks';
 
   public function evaluate($data = []) {
-    // Do not evaluate anything, as it's supposed for process
+    return $this->evaluateChildren($data, [], [
+      ['build'], ['deck'], ['config'], ['media'], ['model'], ['notes']]);
   }
 
   /**
@@ -38,12 +40,30 @@ class CrowdAnkiDecks extends PluginWorkerBase {
         }
       }
     }
-    // Push extra 'fields' branch into $values
-    $values = ['fields' => $this->notes->each->fields] + $values;
-    CrowdAnkiApi::createDeck($values, $notes, $media);
 
-    yield $this->mergeResult($note, $data, $config);
+    $values['model']['fields'] = array_keys($this->notes->each->fields);
+    $values['notes'] = [
+      'data' => $notes,
+      'media' => $media,
+    ];
+
+    yield $this->mergeResult($values, $data, $config);
   }
+
+  /**
+   * @inheritDoc
+   */
+  public function finalize($config, $results) {
+    try {
+      foreach($results as $result) {
+        CrowdAnkiApi::createDeck($result['row']);
+      }
+    }
+    catch (Exception $e) {
+      $this->error($e->getMessage());
+    }
+  }
+
 
   /**
    * @inheritDoc
