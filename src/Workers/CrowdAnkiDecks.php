@@ -2,7 +2,6 @@
 
 namespace DataMincerCrowdAnki\Workers;
 
-use DataMincerCore\Exception\PluginException;
 use DataMincerCore\Plugin\PluginWorkerBase;
 use DataMincerCrowdAnki\CrowdAnkiApi;
 use DataMincerCrowdAnki\Fields\CrowdAnkiNotes;
@@ -26,10 +25,8 @@ class CrowdAnkiDecks extends PluginWorkerBase {
   public function process($config) {
     $data = yield;
     $values = $this->evaluateChildren($data);
-
     $notes = [];
     $media = [];
-    $values = $this->evaluateChildren($data);
     foreach($values['notes'] as $row) {
       $notes[] = array_intersect_key($row, array_flip(['fields', 'guid', 'tags']));
       if (isset($row['media'])) {
@@ -64,15 +61,6 @@ class CrowdAnkiDecks extends PluginWorkerBase {
     }
   }
 
-
-  /**
-   * @inheritDoc
-   * @throws PluginException
-   */
-  public function getValue($data) {
-    // Copy notes and media data
-  }
-
   static function getSchemaChildren() {
     /** @noinspection DuplicatedCode */
     return parent::getSchemaChildren() + CrowdAnkiApi::schemaChildren() + [
@@ -94,7 +82,7 @@ class CrowdAnkiDecks extends PluginWorkerBase {
   }
 
   static function defaultConfig($data = NULL) {
-    return parent::defaultConfig($data) + CrowdAnkiApi::defaultConfig($data);
+    return parent::defaultConfig($data) + CrowdAnkiApi::defaultConfig();
   }
 
 }

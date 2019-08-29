@@ -2,18 +2,35 @@
 
 namespace DataMincerCrowdAnki;
 
-use DataMincerCore\Exception\PluginException;
 use DataMincerCore\Util;
+use DirectoryIterator;
 use Exception;
+use Generator;
+use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
+use Twig\Loader\ArrayLoader;
+use Twig\Loader\FilesystemLoader;
 
 class CrowdAnkiApi {
 
   /**
    * @param $values
-   * @throws PluginException
+   * @throws Exception
    */
   public static function createDeck($values) {
     $build = static::buildDeck($values);
+    if (!$values['preview']) {
+      static::writeDeck($values, $build);
+    }
+    else {
+      static::writePreview($values, $build);
+    }
+  }
+
+  protected static function writeDeck($values, $build) {
+    // Generating deck
     $path = $values['build']['path'] . '/' . $values['build']['name'] . '/' . $values['build']['name'] . '.json';
     Util::prepareDir(dirname($path));
     file_put_contents($path, Util::toJson(static::serializeObjects($build), TRUE));
@@ -154,6 +171,106 @@ class CrowdAnkiApi {
     return $result;
   }
 
+  /**
+   * @param $values
+   * @param $build
+   * @throws Exception
+   */
+  protected static function writePreview($values, $build) {
+    // Previewing cards
+    $path = $values['build']['path'] . '/' . $values['build']['name'] . '.preview';
+    Util::prepareDir($path);
+    $model = current($build['note_models']);
+    file_put_contents($path . '/styles.css', $model['css']);
+    // Get data for the preview
+    if (is_array($values['preview'])) {
+      $note_offset = $values['preview']['note'];
+    }
+    else {
+      $note_offset = 0;
+    }
+    $note_data = [];
+    foreach($model['flds'] as $field_id => $field_info) {
+      $note_data[$field_info['name']] = $build['notes'][$note_offset]['fields'][$field_id];
+    }
+    if (count($model['tmpls']) > 0) {
+      foreach ($model['tmpls'] as $tmpl_index => $tmpl) {
+        static::writePreviews($note_data, $tmpl, $values['build']['name'], $path, $tmpl_index);
+      }
+    }
+    else {
+      $tmpl = current($model['tmpls']);
+      static::writePreviews($note_data, $tmpl, $values['build']['name'], $path);
+    }
+  }
+
+  /**
+   * @param $note_data
+   * @param $tmpl
+   * @param $build_name
+   * @param $path
+   * @param string $postfix
+   * @throws Exception
+   */
+  protected static function writePreviews($note_data, $tmpl, $build_name, $path, $postfix = '') {
+    foreach (['qfmt' => 'front', 'afmt' => 'back'] as $side_index => $side) {
+      foreach (static::getDefaultCardTemplates(['card' => $tmpl[$side_index], 'buildName' => $build_name]) as $anki_card_info) {
+        $prefix = key($anki_card_info);
+        $contents = static::applyTestData(current($anki_card_info), $note_data);
+        $filename = $prefix . '-' . $side . ($postfix ? '-' . $postfix : '') . '.html';
+        // TODO: Apply test data
+        file_put_contents($path . '/' . $filename, $contents);
+      }
+    }
+  }
+
+  /**
+   * @param $context
+   * @return Generator
+   * @throws Exception
+   */
+  protected static function getDefaultCardTemplates($context) {
+    $template_files = [];
+    $templates_path = __DIR__ . '/preview';
+    foreach (new DirectoryIterator($templates_path) as $fileInfo) {
+      if ($fileInfo->isDot()) continue;
+      if (preg_match('~(.+?)\.html\.twig~', $fileInfo->getFilename(), $matches)) {
+        $template_files[$matches[1]] = $matches[0];
+      }
+    }
+    $twig = new Environment(new FilesystemLoader($templates_path));
+    foreach ($template_files as $name => $template_file) {
+      try {
+        $template = $twig->load($template_file);
+        $result = $template->render($context);
+        yield [$name => $result];
+      }
+      catch (LoaderError | RuntimeError | SyntaxError $e) {
+        throw new Exception($e->getMessage() . "\nTemplate: " . $template_file);
+      }
+    }
+  }
+
+  /**
+   * @param $card
+   * @param $data
+   * @return string
+   * @throws Exception
+   */
+  protected static function applyTestData($card, $data) {
+    // TODO: Emulate Anki template engine, meanwhile using Twig LOL
+    $twig = new Environment(new ArrayLoader());
+    /** @noinspection PhpUndefinedMethodInspection */
+    $twig->getLoader()->setTemplate('template', $card);
+    try {
+      $result = $twig->load('template')->render($data);
+    }
+    catch (LoaderError | RuntimeError | SyntaxError $e) {
+      throw new Exception($e->getMessage() . "\nTemplate:\n" . $card);
+    }
+    return $result;
+  }
+
   static function schemaChildren() {
     return [
       # Build params
@@ -182,6 +299,13 @@ class CrowdAnkiApi {
         '_prototype' =>      ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field',
       ]],
 
+      'preview' =>      ['_type' => 'choice', '_required' => FALSE, '_choices' => [
+        'bool' =>         ['_type' => 'boolean', '_required' => TRUE],
+        'note' =>         ['_type' => 'array', '_required' => FALSE, '_children' => [
+          'note' =>         ['_type' => 'number', '_required' => FALSE]
+        ]]
+      ]],
+
       # Deck defaults
       'defaults' =>        ['_type' => 'array', '_required' => FALSE, '_children' => [
         'deck' =>            ['_type' => 'array', '_required' => FALSE, '_ignore_extra_keys' => TRUE, '_children' => []],
@@ -194,8 +318,9 @@ class CrowdAnkiApi {
     ];
   }
 
-  static function defaultConfig($data = NULL) {
+  static function defaultConfig() {
     return [
+      'preview' => FALSE,
       'defaults' => [
         'deck' => [
           'dyn' => 0,

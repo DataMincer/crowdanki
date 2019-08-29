@@ -80,6 +80,6 @@ class CrowdAnkiDeck extends PluginWorkerBase {
   }
 
   static function defaultConfig($data = NULL) {
-    return parent::defaultConfig($data) + CrowdAnkiApi::defaultConfig($data);
+    return parent::defaultConfig($data) + CrowdAnkiApi::defaultConfig();
   }
 }
