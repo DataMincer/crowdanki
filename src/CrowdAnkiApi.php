@@ -213,11 +213,18 @@ class CrowdAnkiApi {
    * @throws Exception
    */
   protected static function writePreviews($note_data, $tmpl, $build_name, $path, $postfix = '') {
-    foreach (['qfmt' => 'front', 'afmt' => 'back'] as $side_index => $side) {
-      foreach (static::getDefaultCardTemplates(['card' => $tmpl[$side_index], 'buildName' => $build_name]) as $anki_card_info) {
+    $sides = ['qfmt' => ['front', 'back'], 'afmt' => ['back', 'front']];
+    foreach ($sides as $side_index => $side_info) {
+      $context = [
+        'card' => $tmpl[$side_index],
+        'buildName' => $build_name,
+        'side' => $side_info[0],
+        'other_side' => $side_info[1],
+      ];
+      foreach (static::getDefaultCardTemplates($context) as $anki_card_info) {
         $prefix = key($anki_card_info);
         $contents = static::applyTestData(current($anki_card_info), $note_data);
-        $filename = $prefix . '-' . $side . ($postfix ? '-' . $postfix : '') . '.html';
+        $filename = $prefix . '-' . $side_info[0] . ($postfix ? '-' . $postfix : '') . '.html';
         // TODO: Apply test data
         file_put_contents($path . '/' . $filename, $contents);
       }
@@ -242,7 +249,10 @@ class CrowdAnkiApi {
     foreach ($template_files as $name => $template_file) {
       try {
         $template = $twig->load($template_file);
-        $result = $template->render($context);
+        $result = $template->render($context + [
+          'template' => $name,
+          'templates' => array_keys($template_files),
+        ]);
         yield [$name => $result];
       }
       catch (LoaderError | RuntimeError | SyntaxError $e) {

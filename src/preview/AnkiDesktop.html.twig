@@ -1,0 +1,128 @@
+<head>
+  <title>default</title>
+  <base href="../{{ buildName }}/media/">
+  <style>
+    body {
+      zoom: 1;
+      background: #efefef;
+      font-size: 14px;
+      font-family: "Noto Sans", "sans-serif";
+    }
+
+    /* Buttons */
+    button {
+      font-size: 14px;
+      -webkit-appearance: none;
+      outline: 0;
+      background-color: #efefef;
+      border: 1px solid rgba(0, 0, 0, .2);
+      border-radius: 2px;
+      height: 24px;
+      font-family: "Noto Sans", "sans-serif";
+    }
+
+    button:focus {
+      border-color: #308cc6
+    }
+
+    button:hover {
+      background-color: #fff
+    }
+
+    button:active, button:active:hover {
+      background-color: #308cc6;
+      color: #ffffff;
+    }
+
+    /* Input field focus outline */
+    textarea:focus, input:focus, input[type]:focus, .uneditable-input:focus,
+    div[contenteditable="true"]:focus {
+      outline: 0 none;
+      border-color: #308cc6;
+    }
+    /* webview.css */
+    body {
+      margin: 2em;
+    }
+    h1 {
+      margin-bottom: 0.2em;
+    }
+    /* reviewer.css */
+    hr {
+      background-color: #ccc;
+    }
+
+    body {
+      margin: 20px;
+      overflow-wrap: break-word;
+    }
+
+    body.nightMode {
+      background-color: black;
+      color: white;
+    }
+
+    img {
+      max-width: 95%;
+      max-height: 95%;
+    }
+  </style>
+  <link rel="stylesheet" type="text/css" href="../../{{ buildName }}.preview/styles.css">
+</head>
+<body class="card">
+  <script>
+    (function () {
+      const body = document.querySelector('body');
+      const buttons = document.createElement('div');
+      buttons.style.cssText = "display: flex; flex-direction: row; position: fixed; align-items: center; bottom: 0; left: 50%; transform: translateX(-50%); padding: 1.2vh 2vh; background: white; box-shadow: 0 7px 9px -4px rgba(0,0,0,.2), 0 14px 21px 2px rgba(0,0,0,.14), 0 5px 26px 4px rgba(0,0,0,.12);";
+
+      const button_flip = document.createElement('button');
+      button_flip.style.cssText = "margin-right: 1vw; font-size: 1.4vh; height: auto;";
+      button_flip.appendChild(document.createTextNode('Flip'));
+      buttons.appendChild(button_flip);
+
+      const button_night = document.createElement('button');
+      button_night.style.cssText = "white-space: nowrap; font-size: 1.4vh; height: auto;";
+      buttons.appendChild(button_night);
+      function updateButtonNight() {
+        const night = body.classList.contains('night_mode') ? 'on' : 'off';
+        button_night.innerText = 'Night: ' + night
+      }
+      updateButtonNight();
+
+      body.appendChild(buttons);
+
+      button_flip.addEventListener('click', function (e) {
+        let regex = /{{ '-' ~ side }}/;
+          window.location.href = window.location.href.replace(regex, '{{ '-' ~ other_side }}');
+      });
+
+      button_night.addEventListener('click', function (e) {
+        body.classList.toggle('night_mode');
+        updateButtonNight();
+      });
+
+      // Switch template buttons
+      let button_tpl;
+      {% for tpl in templates %}
+        button_tpl = document.createElement('button');
+        button_tpl.style.cssText = "margin-left: 1vw; font-size: 1.4vh; height: auto;";
+        button_tpl.appendChild(document.createTextNode("{{ tpl }}"));
+        {% if tpl == template %}
+          button_tpl.setAttribute('disabled', '');
+        {% endif %}
+        buttons.appendChild(button_tpl);
+        {% if tpl != template %}
+          button_tpl.addEventListener('click', function (e) {
+            let regex = /{{ template ~ '-' }}/;
+            window.location.href = window.location.href.replace(regex, '{{ tpl ~ '-' }}');
+          });
+        {% endif %}
+      {% endfor %}
+    })();
+  </script>
+  <div id="qa">
+    {{ card | raw }}
+  </div>
+</body>
+

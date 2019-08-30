@@ -1,0 +1,232 @@
+<!doctype html>
+<html class="mobile android linux js">
+  <head>
+    <title>AnkiDroid Flashcard</title>
+    <base href="../{{ buildName }}/media/">
+    <meta charset="utf-8">
+    <style>
+      /* flashcard.css" */
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body.night_mode {
+        color: white;
+        background-color: black;
+      }
+
+      body.ankidroid_dark_mode {
+        background-color: #303030;
+      }
+
+      #content {
+        margin: 0.5em;
+      }
+
+      /* For the typed/correct answer comparison. The typePrompt and typeOff
+        classes are AnkiDroid specific, and used only for older (before
+        4.0) Android versions . typePrompt is a placeholder where the input
+        box should be. typeOff is added when the user switched off entering
+        the answer. */
+      .typeGood {
+        background-color: #0f0;
+      }
+
+      .typeBad {
+        background-color: #f00;
+      }
+
+      .typeMissed {
+        background-color: #ccc;
+      }
+
+      #typeans {
+        width: 100%;
+      }
+
+      .typePrompt {
+        color: magenta;
+      }
+
+      .typePrompt.typeOff {
+        display: none;
+      }
+
+      .night_mode input#typeans {
+        color: white;
+        background-color: black;
+      }
+
+      .night_mode .typeGood {
+        background-color: #508040;
+      }
+
+      .night_mode .typeBad {
+        background-color: #905050;
+      }
+
+      .ankidroid_dark_mode input#typeans {
+        background-color: #303030;
+      }
+
+      .replaybutton {
+        text-decoration: none;
+      }
+
+
+      /*
+      Use hard-coded max dimensions if using Chrome back-end. Chrome is able to
+      zoom into images correctly even with max dimensions specified, so this way is
+      preferred over using JavaScript.
+      */
+      .chrome img {
+        max-width: 100%;
+        max-height: 90%;
+      }
+
+      .vertically_centered {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: -webkit-box;
+        -webkit-box-align: stretch;
+        -webkit-box-pack: center;
+        -webkit-box-orient: vertical;
+      }
+
+
+      /* Make sure the replay buttons look black or white unless explicitly
+      changed. Use some fancy CSS to make the button align vertically, and
+      scale up, but not down.  */
+
+      .replaybutton span {
+        display: inline-block;
+        vertical-align: middle;
+        padding: 5px;
+      }
+
+      .replaybutton span svg {
+        stroke: none;
+        fill: black;
+        display: inline;
+        height: 1em;
+        width: 1em;
+        min-width: 32px;
+        min-height: 32px;
+      }
+
+      .replaybutton span img {
+        display: inline;
+        height: 1em;
+        width: 1em;
+        min-width: 32px;
+        min-height: 32px;
+      }
+
+      .night_mode .replaybutton svg {
+        fill: white;
+      }
+
+      /* chess.css */
+
+      .chess_board {
+        color: black;
+        border: 1px solid #333;
+      }
+
+      .chess_board td {
+        background-color: #fff;
+        font-family: "Chess Merida Unicode", sans-serif;
+        height: 30px;
+        width: 30px;
+        font-size: 22px;
+        vertical-align: middle;
+        text-align: center;
+      }
+
+      .chess_board tr:nth-child(odd) td:nth-child(even),
+      .chess_board tr:nth-child(even) td:nth-child(odd) {
+        background-color: #b1ccff;
+        -webkit-box-shadow: inset 0 0 8px rgba(0, 0, 0, .4);
+      }
+
+      .night_mode .chess_board td {
+        background-color: #777;
+      }
+
+      .night_mode .chess_board tr:nth-child(odd) td:nth-child(even),
+      .night_mode .chess_board tr:nth-child(even) td:nth-child(odd) {
+        background-color: #444;
+        -webkit-box-shadow: inset 0 0 8px rgba(0, 0, 0, .4);
+      }
+
+    </style>
+    <style>
+      /* Default for mobile */
+      body {
+        font-family: sans-serif;
+      }
+    </style>
+    <link rel="stylesheet" type="text/css" href="../../{{ buildName }}.preview/styles.css">
+
+  </head>
+  <body class="card">
+    <script>
+      (function () {
+        const body = document.querySelector('body');
+        const buttons = document.createElement('div');
+        buttons.style.cssText = "display: flex; flex-direction: row; position: fixed; align-items: center; bottom: 0; left: 50%; transform: translateX(-50%); padding: 1.2vh 2vh; background: white; box-shadow: 0 7px 9px -4px rgba(0,0,0,.2), 0 14px 21px 2px rgba(0,0,0,.14), 0 5px 26px 4px rgba(0,0,0,.12);";
+
+        const button_flip = document.createElement('button');
+        button_flip.style.cssText = "margin-right: 1vw; font-size: 1.4vh; height: auto;";
+        button_flip.appendChild(document.createTextNode('Flip'));
+        buttons.appendChild(button_flip);
+
+        const button_night = document.createElement('button');
+        button_night.style.cssText = "white-space: nowrap; font-size: 1.4vh; height: auto;";
+        buttons.appendChild(button_night);
+        function updateButtonNight() {
+          const night = body.classList.contains('night_mode') ? 'on' : 'off';
+          button_night.innerText = 'Night: ' + night
+        }
+        updateButtonNight();
+
+        body.appendChild(buttons);
+
+        button_flip.addEventListener('click', function (e) {
+          let regex = /{{ '-' ~ side }}/;
+          window.location.href = window.location.href.replace(regex, '{{ '-' ~ other_side }}');
+        });
+
+        button_night.addEventListener('click', function (e) {
+          body.classList.toggle('night_mode');
+          updateButtonNight();
+        });
+
+        // Switch template buttons
+        let button_tpl;
+        {% for tpl in templates %}
+          button_tpl = document.createElement('button');
+          button_tpl.style.cssText = "margin-left: 1vw; font-size: 1.4vh; height: auto;";
+          button_tpl.appendChild(document.createTextNode("{{ tpl }}"));
+          {% if tpl == template %}
+            button_tpl.setAttribute('disabled', '');
+          {% endif %}
+          buttons.appendChild(button_tpl);
+          {% if tpl != template %}
+            button_tpl.addEventListener('click', function (e) {
+              let regex = /{{ template ~ '-' }}/;
+              window.location.href = window.location.href.replace(regex, '{{ tpl ~ '-' }}');
+            });
+          {% endif %}
+        {% endfor %}
+      })();
+    </script>
+    <div id="content">
+      <div class="{{ side == 'front' ? 'question' : 'answer' }}">
+        {{ card | raw }}
+      </div>
+    </div>
+  </body>
+</html>
