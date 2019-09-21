@@ -2,6 +2,7 @@
 
 namespace DataMincerCrowdAnki;
 
+use DataMincerCore\FileManager;
 use DataMincerCore\Util;
 use DirectoryIterator;
 use Exception;
@@ -17,23 +18,30 @@ class CrowdAnkiApi {
 
   /**
    * @param $values
+   * @param FileManager $file_manager
    * @throws Exception
    */
-  public static function createDeck($values) {
+  public static function createDeck($values, $file_manager) {
     $build = static::buildDeck($values);
     if (!$values['preview']) {
-      static::writeDeck($values, $build);
+      static::writeDeck($values, $build, $file_manager);
     }
     else {
-      static::writePreview($values, $build);
+      static::writePreview($values, $build, $file_manager);
     }
   }
 
-  protected static function writeDeck($values, $build) {
+  /**
+   * @param $values
+   * @param $build
+   * @param FileManager $file_manager
+   */
+  protected static function writeDeck($values, $build, $file_manager) {
     // Generating deck
-    $path = $values['build']['path'] . '/' . $values['build']['name'] . '/' . $values['build']['name'] . '.json';
-    Util::prepareDir(dirname($path));
-    file_put_contents($path, Util::toJson(static::serializeObjects($build), TRUE));
+    $path = $file_manager->resolveUri($values['build']);
+    $build_name =  basename($path);
+    Util::prepareDir($path);
+    file_put_contents($path . '/' . $build_name . '.json', Util::toJson(static::serializeObjects($build), TRUE));
   }
 
   protected static function serializeObjects($data) {
@@ -174,11 +182,14 @@ class CrowdAnkiApi {
   /**
    * @param $values
    * @param $build
+   * @param FileManager $file_manager
    * @throws Exception
    */
-  protected static function writePreview($values, $build) {
+  protected static function writePreview($values, $build, $file_manager) {
     // Previewing cards
-    $path = $values['build']['path'] . '/' . $values['build']['name'] . '.preview';
+    $path = $file_manager->resolveUri($values['build']);
+    $build_name =  basename($path);
+    $path .= '.preview';
     Util::prepareDir($path);
     $model = current($build['note_models']);
     file_put_contents($path . '/styles.css', $model['css']);
@@ -195,12 +206,12 @@ class CrowdAnkiApi {
     }
     if (count($model['tmpls']) > 0) {
       foreach ($model['tmpls'] as $tmpl_index => $tmpl) {
-        static::writePreviews($note_data, $tmpl, $values['build']['name'], $path, $tmpl_index);
+        static::writePreviews($note_data, $tmpl, $build_name, $path, $tmpl_index);
       }
     }
     else {
       $tmpl = current($model['tmpls']);
-      static::writePreviews($note_data, $tmpl, $values['build']['name'], $path);
+      static::writePreviews($note_data, $tmpl, $build_name, $path);
     }
   }
 
@@ -283,11 +294,7 @@ class CrowdAnkiApi {
 
   static function schemaChildren() {
     return [
-      # Build params
-      'build' =>      ['_type' => 'array', '_required' => TRUE, '_children' => [
-        'name' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-        'path' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
-      ]],
+      'build' =>      ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
       'deck' =>       ['_type' => 'array', '_required' => TRUE, '_children' => [
         'uuid' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],
         'name' =>       ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field'],

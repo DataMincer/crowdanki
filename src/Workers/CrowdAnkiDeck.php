@@ -14,7 +14,6 @@ class CrowdAnkiDeck extends PluginWorkerBase {
 
   protected static $pluginId = 'crowdankideck';
 
-  protected $globals = [];
   protected $notes = [];
 
   public function evaluate($data = []) {
@@ -51,7 +50,7 @@ class CrowdAnkiDeck extends PluginWorkerBase {
       'media' => $media,
     ];
     try {
-      CrowdAnkiApi::createDeck($values);
+      CrowdAnkiApi::createDeck($values, $this->fileManager);
     }
     catch (Exception $e) {
       $this->error($e->getMessage());
