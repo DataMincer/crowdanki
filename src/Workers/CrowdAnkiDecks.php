@@ -27,7 +27,11 @@ class CrowdAnkiDecks extends PluginWorkerBase {
     $values = $this->evaluateChildren($data);
     $notes = [];
     $media = [];
+    $field_list = [];
     foreach($values['notes'] as $row) {
+      if (empty($field_list)) {
+        $field_list = array_keys($row['fields']);
+      }
       $notes[] = array_intersect_key($row, array_flip(['fields', 'guid', 'tags']));
       if (isset($row['media'])) {
         foreach ($row['media'] as $file) {
@@ -38,7 +42,7 @@ class CrowdAnkiDecks extends PluginWorkerBase {
       }
     }
 
-    $values['model']['fields'] = array_keys($this->notes->each->fields);
+    $values['model']['fields'] = $field_list;
     $values['notes'] = [
       'data' => $notes,
       'media' => $media,

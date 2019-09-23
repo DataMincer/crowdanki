@@ -3,9 +3,10 @@
 namespace DataMincerCrowdAnki\Fields;
 
 use DataMincerCore\Plugin\PluginFieldBase;
+use DataMincerCore\Plugin\PluginFieldInterface;
 
 /**
- * @property string rows
+ * @property PluginFieldInterface source
  * @property string as
  * @property CrowdAnkiNote each
  */
@@ -16,10 +17,10 @@ class CrowdAnkiNotes extends PluginFieldBase {
   protected static $isDefault = TRUE;
 
   function getValue($data) {
-    $rows = $this->resolveParams($data, $this->rows);
+    $source = $this->source->getValue($data);
     $result = [];
-    foreach($rows as $row) {
-      $result[] = $this->each->evaluate([$this->as => $row] + $data);
+    foreach($source as $item) {
+      $result[] = $this->each->evaluate([$this->as => $item] + $data);
     }
     return $result;
   }
@@ -32,8 +33,8 @@ class CrowdAnkiNotes extends PluginFieldBase {
 
   static function getSchemaChildren() {
     return parent::getSchemaChildren() + [
-      'rows' => ['_type' => 'text', '_required' => TRUE ],
-      'as' => ['_type' => 'text', '_required' => TRUE ],
+      'source' => [ '_type' => 'partial', '_required' => TRUE, '_partial' => 'field' ],
+      'as' => ['_type' => 'text', '_required' => FALSE ],
       'each' =>   ['_type' => 'partial', '_required' => TRUE, '_partial' => 'crowdankinote'],
     ];
   }
