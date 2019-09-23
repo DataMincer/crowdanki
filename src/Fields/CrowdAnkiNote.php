@@ -33,7 +33,7 @@ class CrowdAnkiNote extends PluginFieldBase {
       $result['fields'] = $this->note->getValue($data);
     }
     if (!empty($this->fields)) {
-      $result['fields'] = $this->evaluateChildren($data, [['fields']]);
+      $result['fields'] = current($this->evaluateChildren($data, [['fields']]));
     }
     // Convert all field values to string
     $result['fields'] = array_map('strval', $result['fields']);
