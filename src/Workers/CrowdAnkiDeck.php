@@ -33,7 +33,11 @@ class CrowdAnkiDeck extends PluginWorkerBase {
   public function finalize($config, $results) {
     $notes = [];
     $media = [];
+    $field_list = [];
     foreach($results as $result) {
+      if (empty($field_list)) {
+        $field_list = array_keys($result['row']['fields']);
+      }
       $notes[] = array_intersect_key($result['row'], array_flip(['fields', 'guid', 'tags']));
       if (isset($result['row']['media'])) {
         foreach ($result['row']['media'] as $file) {
@@ -44,7 +48,7 @@ class CrowdAnkiDeck extends PluginWorkerBase {
       }
     }
     $values = $config;
-    $values['model']['fields'] = array_keys($this->note->fields);
+    $values['model']['fields'] = $field_list;
     $values['notes'] = [
       'data' => $notes,
       'media' => $media,
