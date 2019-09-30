@@ -147,7 +147,7 @@ class CrowdAnkiApi {
     $result = [];
     $i = 0;
     foreach ($values['model']['templates'] as $name => $template) {
-      if (($parts = preg_split('~\r?\n\r?\n--\r?\n\r?\n~', $template)) === FALSE || count($parts) !== 2) {
+      if (($parts = preg_split('~(\r?\n\r?\n--\r?\n\r?\n|<split\s*/>|<split></split>)~', $template)) === FALSE || count($parts) !== 2) {
         throw new Exception("Incorrect template: {$name}. It must consist of two parts divided by '--' on a separate line.");
       }
       $result[] = [
