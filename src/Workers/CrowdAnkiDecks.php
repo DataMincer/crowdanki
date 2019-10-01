@@ -57,7 +57,7 @@ class CrowdAnkiDecks extends PluginWorkerBase {
   public function finalize($config, $results) {
     try {
       foreach($results as $result) {
-        CrowdAnkiApi::createDeck($result['row'], $this->fileManager);
+        CrowdAnkiApi::createDeck($result['row'], $this->_fileManager);
       }
     }
     catch (Exception $e) {

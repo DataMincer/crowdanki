@@ -54,7 +54,7 @@ class CrowdAnkiDeck extends PluginWorkerBase {
       'media' => $media,
     ];
     try {
-      CrowdAnkiApi::createDeck($values, $this->fileManager);
+      CrowdAnkiApi::createDeck($values, $this->_fileManager);
     }
     catch (Exception $e) {
       $this->error($e->getMessage());
