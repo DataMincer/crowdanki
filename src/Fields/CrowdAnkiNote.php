@@ -6,7 +6,7 @@ use DataMincerCore\Plugin\PluginFieldBase;
 use DataMincerCore\Plugin\PluginFieldInterface;
 
 /**
- * @property PluginFieldInterface[] media
+ * @property PluginFieldInterface[] fmedia
  * @property PluginFieldInterface[] fields
  * @property PluginFieldInterface note
  * @property PluginFieldInterface guid
@@ -28,12 +28,16 @@ class CrowdAnkiNote extends PluginFieldBase {
     if (!empty($this->note) && !empty($this->fields)) {
       $this->error("Only one key should be used: either 'note' or 'fields', both found.");
     }
-    $result = $this->evaluateChildren($data, [], [['note'], ['fields']]);
+    $result = $this->evaluateChildren($data, [['guid'], ['tags']], []);
+    $result['fmedia'] = NULL;
+    if (!empty($this->fmedia)) {
+      $result['fmedia'] = current($this->evaluateChildren($data, [['fmedia']]));
+    }
     if (!empty($this->note)) {
-      $result['fields'] = $this->note->getValue($data);
+      $result['fields'] = $this->note->getValue(['fmedia' => $result['fmedia']] + $data);
     }
     if (!empty($this->fields)) {
-      $result['fields'] = current($this->evaluateChildren($data, [['fields']]));
+      $result['fields'] = current($this->evaluateChildren(['fmedia' => $result['fmedia']] + $data, [['fields']]));
     }
     // Convert all field values to string
     $result['fields'] = array_map('strval', $result['fields']);
@@ -44,7 +48,7 @@ class CrowdAnkiNote extends PluginFieldBase {
   static function getSchemaChildren() {
     return parent::getSchemaChildren() + [
       # Deck notes and their media
-      'media' =>           ['_type' => 'prototype', '_required' => FALSE,
+      'fmedia' =>           ['_type' => 'prototype', '_required' => FALSE,
         '_prototype' =>      ['_type' => 'partial', '_required' => TRUE, '_partial' => 'field',
         ]],
       'fields' =>          ['_type' => 'prototype', '_required' => FALSE,
