@@ -189,10 +189,12 @@ class CrowdAnkiApi {
     // Previewing cards
     $path = $file_manager->resolveUri($values['build']);
     $build_name =  basename($path);
+    $model = current($build['note_models']);
+    $styles_path = $path . '/media';
+    Util::prepareDir($styles_path);
+    file_put_contents($styles_path . '/styles.css', $model['css']);
     $path .= '.preview';
     Util::prepareDir($path);
-    $model = current($build['note_models']);
-    file_put_contents($path . '/styles.css', $model['css']);
     // Get data for the preview
     if (is_array($values['preview'])) {
       $note_offset = $values['preview']['note'];
@@ -279,17 +281,47 @@ class CrowdAnkiApi {
    * @throws Exception
    */
   protected static function applyTestData($card, $data) {
+    return static::renderTemplate($card, $data);
+//    // TODO: Emulate Anki template engine, meanwhile using Twig LOL
+//    $twig = new Environment(new ArrayLoader());
+//    /** @noinspection PhpUndefinedMethodInspection */
+//    $twig->getLoader()->setTemplate('template', $card);
+//    try {
+//      $result = $twig->load('template')->render($data);
+//    }
+//    catch (LoaderError | RuntimeError | SyntaxError $e) {
+//      throw new Exception($e->getMessage() . "\nTemplate:\n" . $card);
+//    }
+//    return $result;
+  }
+
+  protected static function renderTemplate($template, $data) {
     // TODO: Emulate Anki template engine, meanwhile using Twig LOL
-    $twig = new Environment(new ArrayLoader());
-    /** @noinspection PhpUndefinedMethodInspection */
-    $twig->getLoader()->setTemplate('template', $card);
-    try {
-      $result = $twig->load('template')->render($data);
-    }
-    catch (LoaderError | RuntimeError | SyntaxError $e) {
-      throw new Exception($e->getMessage() . "\nTemplate:\n" . $card);
-    }
-    return $result;
+    // Replace fields
+    $res = $template;
+    $res = preg_replace_callback('~{{\s*([^\s]+)\s*}}~', function ($match) use ($data) {
+      $field = $match[1];
+      if (array_key_exists($field, $data)) {
+        return $data[$field];
+      }
+      return '';
+    }, $res);
+    // Replace [sound:...] and [img:...] tags
+    $res = preg_replace_callback('~\[(sound|img):([^\]]+)\]~', function ($match) use ($data) {
+      $type = $match[1];
+      $src = $match[2];
+      switch ($type) {
+        case 'sound':
+          $res = "<audio src='$src' autoplay/>";
+          break;
+        case 'img':
+        default:
+          $res = "<img src='$src'/>";
+          break;
+      }
+      return $res;
+    }, $res);
+    return $res;
   }
 
   static function schemaChildren() {
