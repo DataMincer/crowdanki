@@ -307,6 +307,7 @@ class CrowdAnkiApi {
       return '';
     }, $res);
     // Replace [sound:...] and [img:...] tags
+    /** @noinspection RegExpRedundantEscape */
     $res = preg_replace_callback('~\[(sound|img):([^\]]+)\]~', function ($match) use ($data) {
       $type = $match[1];
       $src = $match[2];
