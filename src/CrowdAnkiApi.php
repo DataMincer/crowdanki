@@ -152,12 +152,17 @@ class CrowdAnkiApi {
       }
       $result[] = [
         'name' => $name,
-        'qfmt' => $parts[0],
-        'afmt' => $parts[1],
+        'qfmt' => static::fixTemplateHr($parts[0]),
+        'afmt' => static::fixTemplateHr($parts[1]),
         'ord' => $i++,
       ] + $values['defaults']['model_template'];
     }
     return $result;
+  }
+
+  protected static function fixTemplateHr($tpl) {
+    // Ugly fix for AnkiDroid which is unable to read proper HTML
+    return str_replace('<hr id="answer" />', "\n<hr id=answer>\n", $tpl);
   }
 
   /**
@@ -227,19 +232,24 @@ class CrowdAnkiApi {
    */
   protected static function writePreviews($note_data, $tmpl, $build_name, $path, $postfix = '') {
     $sides = ['qfmt' => ['front', 'back'], 'afmt' => ['back', 'front']];
+    $front_side = NULL;
     foreach ($sides as $side_index => $side_info) {
-      $context = [
-        'card' => $tmpl[$side_index],
+      $note_data['FrontSide'] = $front_side;
+      $card_view = static::applyTestData($tmpl[$side_index], $note_data);
+      if (is_null($front_side)) {
+        $front_side = $card_view;
+      }
+      $build = [
+        'card' => $card_view,
         'buildName' => $build_name,
         'side' => $side_info[0],
         'other_side' => $side_info[1],
       ];
-      foreach (static::getDefaultCardTemplates($context) as $anki_card_info) {
+      foreach (static::getDefaultCardTemplates($build) as $anki_card_info) {
         $prefix = key($anki_card_info);
-        $contents = static::applyTestData(current($anki_card_info), $note_data);
         $filename = $prefix . '-' . $side_info[0] . ($postfix ? '-' . $postfix : '') . '.html';
         // TODO: Apply test data
-        file_put_contents($path . '/' . $filename, $contents);
+        file_put_contents($path . '/' . $filename, current($anki_card_info));
       }
     }
   }
@@ -282,17 +292,6 @@ class CrowdAnkiApi {
    */
   protected static function applyTestData($card, $data) {
     return static::renderTemplate($card, $data);
-//    // TODO: Emulate Anki template engine, meanwhile using Twig LOL
-//    $twig = new Environment(new ArrayLoader());
-//    /** @noinspection PhpUndefinedMethodInspection */
-//    $twig->getLoader()->setTemplate('template', $card);
-//    try {
-//      $result = $twig->load('template')->render($data);
-//    }
-//    catch (LoaderError | RuntimeError | SyntaxError $e) {
-//      throw new Exception($e->getMessage() . "\nTemplate:\n" . $card);
-//    }
-//    return $result;
   }
 
   protected static function renderTemplate($template, $data) {
