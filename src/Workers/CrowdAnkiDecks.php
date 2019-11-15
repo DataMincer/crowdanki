@@ -26,17 +26,17 @@ class CrowdAnkiDecks extends PluginWorkerBase {
     $data = yield;
     $values = $this->evaluateChildren($data);
     $notes = [];
-    $media = [];
+    $fmedia = [];
     $field_list = [];
     foreach($values['notes'] as $row) {
       if (empty($field_list)) {
         $field_list = array_keys($row['fields']);
       }
       $notes[] = array_intersect_key($row, array_flip(['fields', 'guid', 'tags']));
-      if (isset($row['media'])) {
-        foreach ($row['media'] as $file) {
-          if (!in_array($file, $media)) {
-            $media[] = $file;
+      if (isset($row['fmedia'])) {
+        foreach ($row['fmedia'] as $file) {
+          if (!in_array($file, $fmedia)) {
+            $fmedia[] = $file;
           }
         }
       }
@@ -45,7 +45,7 @@ class CrowdAnkiDecks extends PluginWorkerBase {
     $values['model']['fields'] = $field_list;
     $values['notes'] = [
       'data' => $notes,
-      'media' => $media,
+      'fmedia' => $fmedia,
     ];
 
     yield $this->mergeResult($values, $data, $config);

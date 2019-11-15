@@ -11,7 +11,6 @@ use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
-use Twig\Loader\ArrayLoader;
 use Twig\Loader\FilesystemLoader;
 
 class CrowdAnkiApi {
@@ -84,7 +83,8 @@ class CrowdAnkiApi {
    * @return array
    */
   protected static function buildMedia($values) {
-    $media = $values['notes']['media'];
+    //$media = $values['notes']['fmedia'];
+    $media = [];
     if (isset($values['media'])) {
       foreach ($values['media'] as $list) {
         foreach ($list as $file) {
@@ -316,7 +316,7 @@ class CrowdAnkiApi {
           break;
         case 'img':
         default:
-          $res = "<img src='$src'/>";
+          $res = "<img alt='' src='$src'/>";
           break;
       }
       return $res;
