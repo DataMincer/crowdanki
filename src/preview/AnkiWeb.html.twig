@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray webkit chrome linux">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <base href="../{{ buildName }}/media/">
+    <title>AnkiWeb Flashcard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://ankiuser.net/static/app.css" type="text/css" media="screen">
+
+    <style>
+      .card img {
+        max-width: 95%;
+      }
+
+      .invisible {
+        display: none;
+      }
+
+      #leftStudyMenu {
+        float: left;
+      }
+
+      #rightStudyMenu {
+        float: right;
+        font-size: 16px;
+      }
+
+      #ansarea {
+        min-height: 6rem;
+        background: white;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+
+      #ansarea-pad {
+        min-height: 6rem;
+      }
+
+      #quiz {
+        display: none;
+      }
+
+      #fulldesc {
+        display: none;
+      }
+
+      hr {
+        color: #eee;
+        background-color: #e1e1e1;
+        height: 1px;
+        border: 0;
+      }
+
+      #qa {
+        margin-top: 30px;
+      }
+
+      .card {
+        border: 0;
+      }
+
+      html {
+        background: white !important;
+      }
+    </style>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+  </head>
+  <body>
+    <nav class="navbar navbar-toggleable-md navbar-light bg-gray">
+      <div class="container">
+        <button class="navbar-toggler navbar-toggler-right collapsed" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="#"><span class="align-middle">AnkiWeb</span></a>
+
+        <div class="navbar-collapse collapse" id="navbarSupportedContent" aria-expanded="false" style="">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item "><a href="#" class="nav-link">Decks</a></li>
+            <li class="nav-item "><a href="#" class="nav-link">Add</a></li>
+            <li class="nav-item "><a href="#" class="nav-link">Search</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item ">
+              <a href="#" class="nav-link">Account</a>
+            </li>
+            <li class="nav-item"><a href="#" class="nav-link">Log out</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <main class="container">
+      <div id="overview" style="display: none;">
+        <h1>English Youtube</h1>
+        <div class="descfont description"><h3>Ultau Generator</h3>
+          <hr>
+          Artiom Neganov
+          aneganov@gmail.com
+        </div>
+        <p>
+        </p>
+        <div class="row">
+          <div class="col-2">New</div>
+          <div class="col-2"><b><font color="#00a">14</font></b></div>
+        </div>
+        <div class="row">
+          <div class="col-2">In Learning</div>
+          <div class="col-2"><b><font color="#a00">0</font></b></div>
+        </div>
+        <div class="row">
+          <div class="col-2">To Review</div>
+          <div class="col-2"><b><font color="#0a0">0</font></b></div>
+        </div>
+        <div class="py-3">
+          <button id="studynow" class="btn btn-primary btn-lg">Study Now
+          </button>
+        </div>
+        <p>
+          <a target="_parent" href="#">Basic phone mode</a>
+        </p>
+        <p>
+          <a target="_parent" href="#">Options</a>
+        </p>
+      </div>
+      <div id="quiz" style="display: block;">
+              <span id="leftStudyMenu">
+                <a class="btn btn-secondary">Edit</a>
+                <a class="btn btn-secondary disabled" title="Save recent answers">Save</a>
+                <button class="btn btn-secondary" type="button" title="Bigger text" onclick="study.bigger();">+</button>
+                <button class="btn btn-secondary" type="button" title="Smaller text"
+                        onclick="study.smaller();">-</button>
+              </span>
+        <span id="rightStudyMenu">
+          <u><font color="#0000ff">1</font></u> + <font color="#990000">0</font> + <font color="#009900">0</font></span>
+        <div style="clear: both;" class="pt-1"></div>
+        <div id="qa_box" class="card card1">
+          <div id="qa" style="zoom: 1;">
+            {{ card | raw }}
+          </div>
+          <br>
+        </div>
+        <div id="ansarea-pad"></div>
+        <div id="ansarea">
+          <div id="ansbut" class="row justify-content-center">
+            <div class="col-auto">
+              <div class="pt-3"></div>
+              <button id="ansbuta" class="btn btn-primary btn-lg" onclick="return study.drawAnswer();">
+                Show Answer
+              </button>
+            </div>
+          </div>
+          <div id="easebuts" class="invisible row justify-content-center">
+          </div>
+        </div>
+      </div>
+      <div class="form-group"></div>
+    </main>
+    <script>
+      var _host = "https://ankiweb.net";
+      var _ihost = "https://ankiuser.net";
+      study = require("study").default;
+    </script>
+    <script>
+      (function () {
+        const body = document.querySelector('body');
+        const buttons = document.createElement('div');
+        buttons.style.cssText = "display: flex; flex-direction: row; position: fixed; align-items: center; bottom: 0; left: 50%; transform: translateX(-50%); padding: 1.2vh 2vh; background: white; box-shadow: 0 7px 9px -4px rgba(0,0,0,.2), 0 14px 21px 2px rgba(0,0,0,.14), 0 5px 26px 4px rgba(0,0,0,.12);";
+
+        const button_flip = document.createElement('button');
+        button_flip.style.cssText = "margin-right: 1vw; font-size: 1.4vh; height: auto;";
+        button_flip.appendChild(document.createTextNode('Flip'));
+        buttons.appendChild(button_flip);
+
+        const button_night = document.createElement('button');
+        button_night.style.cssText = "white-space: nowrap; font-size: 1.4vh; height: auto;";
+        buttons.appendChild(button_night);
+
+        function updateButtonNight() {
+          const night = body.classList.contains('night_mode') ? 'on' : 'off';
+          button_night.innerText = 'Night: ' + night
+        }
+
+        updateButtonNight();
+
+        body.appendChild(buttons);
+
+        button_flip.addEventListener('click', function (e) {
+          let regex = /{{ '-' ~ side }}/;
+            window.location.href = window.location.href.replace(regex, '{{ '-' ~ other_side }}');
+        });
+
+        button_night.addEventListener('click', function (e) {
+          body.classList.toggle('night_mode');
+          updateButtonNight();
+        });
+
+        // Switch template buttons
+        let button_tpl;
+        {% for tpl in templates %}
+        button_tpl = document.createElement('button');
+        button_tpl.style.cssText = "margin-left: 1vw; font-size: 1.4vh; height: auto;";
+        button_tpl.appendChild(document.createTextNode("{{ tpl }}"));
+        {% if tpl == template %}
+        button_tpl.setAttribute('disabled', '');
+        {% endif %}
+        buttons.appendChild(button_tpl);
+        {% if tpl != template %}
+        button_tpl.addEventListener('click', function (e) {
+          let regex = /{{ template ~ '-' }}/;
+            window.location.href = window.location.href.replace(regex, '{{ tpl ~ '-' }}');
+        });
+        {% endif %}
+        {% endfor %}
+      })();
+    </script>
+  </body>
+</html>
+
